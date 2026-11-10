@@ -1,16 +1,21 @@
-import { useQuery } from '@tanstack/react-query'
-import { get } from './services/api'
 
-type HealthResponse = {
-    status: string
-    application: string
-}
+import { useDemoSession } from './features/experiments/hooks/useDemoSession'
+import { useExperiments } from './features/experiments/hooks/useExperiments'
+import { ExperimentList } from './features/experiments/components/ExperimentList'
+import { CreateExperimentForm } from './features/experiments/components/CreateExperimentForm'
 
 function App() {
-    const { data, isLoading, isError } = useQuery<HealthResponse>({
-        queryKey: ['health'],
-        queryFn: () => get<HealthResponse>('/api/health'),
-    })
+    const {
+        data: session,
+        isLoading: sessionLoading,
+        isError: sessionError,
+    } = useDemoSession()
+
+    const {
+        data: experiments = [],
+        isLoading: experimentsLoading,
+        isError: experimentsError,
+    } = useExperiments()
 
     return (
         <main className="min-h-screen bg-slate-950 text-white p-8">
@@ -19,18 +24,44 @@ function App() {
             </h1>
 
             <div className="mt-6 rounded-lg bg-slate-900 p-4">
-                <h2 className="text-lg font-semibold">System Status</h2>
+                <h2 className="text-lg font-semibold">
+                    Demo Session
+                </h2>
 
-                {isLoading && <p className="text-slate-400">Checking backend...</p>}
+                {sessionLoading && (
+                    <p className="text-slate-400">
+                        Initializing demo session...
+                    </p>
+                )}
 
-                {isError && <p className="text-pink-400">Backend unavailable</p>}
+                {sessionError && (
+                    <p className="text-pink-400">
+                        Could not initialize demo session.
+                    </p>
+                )}
 
-                {data && (
+                {session && (
                     <p className="text-lime-400">
-                        ● {data.application}: {data.status}
+                        Demo session active: {session.active ? 'Yes' : 'No'}
                     </p>
                 )}
             </div>
+
+            <div className="mt-8">
+                <CreateExperimentForm />
+            </div>
+
+            <section className="mt-8">
+                <h2 className="text-2xl font-bold">
+                    Your Experiments
+                </h2>
+
+                <ExperimentList
+                    experiments={experiments}
+                    isLoading={experimentsLoading}
+                    isError={experimentsError}
+                />
+            </section>
         </main>
     )
 }

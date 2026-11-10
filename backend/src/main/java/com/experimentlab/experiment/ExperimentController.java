@@ -2,8 +2,7 @@
 package com.experimentlab.experiment;
 
 import com.experimentlab.demo.DemoSession;
-import com.experimentlab.demo.DemoSessionService;
-import jakarta.servlet.http.Cookie;
+import com.experimentlab.demo.DemoSessionResolver;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,22 +11,22 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.GetMapping;
-import java.util.List;
+import org.springframework.web.server.ResponseStatusException;
 
-import java.util.UUID;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/experiments")
 public class ExperimentController {
 
     private final ExperimentService experimentService;
-    private final DemoSessionService demoSessionService;
+    private final DemoSessionResolver demoSessionResolver;
 
     public ExperimentController(
             ExperimentService experimentService,
-            DemoSessionService demoSessionService) {
+            DemoSessionResolver demoSessionResolver) {
         this.experimentService = experimentService;
-        this.demoSessionService = demoSessionService;
+        this.demoSessionResolver = demoSessionResolver;
     }
 
     @ResponseStatus(HttpStatus.CREATED)
@@ -36,29 +35,14 @@ public class ExperimentController {
             @RequestBody CreateExperimentRequest request,
             HttpServletRequest httpRequest) {
 
-        String sessionId = null;
+        DemoSession demoSession = demoSessionResolver.resolve(httpRequest)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED,
+                        "Valid demo session required"
+                ));
 
-        if (httpRequest.getCookies() != null) {
-            for (Cookie cookie : httpRequest.getCookies()) {
-                if ("DEMO_SESSION_ID".equals(cookie.getName())) {
-                    sessionId = cookie.getValue();
-                    break;
-                }
-            }
-        }
-
-        if (sessionId == null) {
-            throw new RuntimeException("Demo session required");
-        }
-
-        UUID id = UUID.fromString(sessionId);
-
-        DemoSession demoSession = demoSessionService
-                .findValidSession(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Invalid demo session"));
-
-        Experiment experiment = experimentService.createExperiment(request, demoSession);
+        Experiment experiment =
+                experimentService.createExperiment(request, demoSession);
 
         return experimentService.toResponse(experiment);
     }
@@ -67,27 +51,14 @@ public class ExperimentController {
     public List<ExperimentResponse> getExperiments(
             HttpServletRequest httpRequest) {
 
-        String sessionId = null;
+        DemoSession demoSession = demoSessionResolver.resolve(httpRequest)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED,
+                        "Valid demo session required"
+                ));
 
-        if (httpRequest.getCookies() != null) {
-            for (Cookie cookie : httpRequest.getCookies()) {
-                if ("DEMO_SESSION_ID".equals(cookie.getName())) {
-                    sessionId = cookie.getValue();
-                    break;
-                }
-            }
-        }
-
-        if (sessionId == null) {
-            throw new RuntimeException("Demo session required");
-        }
-
-        UUID id = UUID.fromString(sessionId);
-
-        DemoSession demoSession = demoSessionService
-                .findValidSession(id)
-                .orElseThrow(() -> new RuntimeException("Invalid demo session"));
-
-        return experimentService.getExperimentsForDemoSession(demoSession.getId());
+        return experimentService.getExperimentsForDemoSession(
+                demoSession.getId()
+        );
     }
 }
