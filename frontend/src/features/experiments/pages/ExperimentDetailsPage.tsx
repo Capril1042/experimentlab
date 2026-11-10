@@ -9,6 +9,7 @@ import { useStartExperiment } from '../hooks/useStartExperiment'
 
 import { CreateVariantForm } from '../components/CreateVariantForm'
 import { EditVariantForm } from '../components/EditVariantForm'
+import { SimulationControls } from '../components/SimulationControls'
 
 export function ExperimentDetailsPage() {
     const { id } = useParams<{ id: string }>()
@@ -250,6 +251,11 @@ export function ExperimentDetailsPage() {
                                 editing, and deletion are disabled.
                             </p>
                         </div>
+                    )}
+
+                    {/* Simulation controls */}
+                    {experiment.status === 'RUNNING' && (
+                        <SimulationControls experimentId={id ?? ''} />
                     )}
 
                     {/* Error messages */}
