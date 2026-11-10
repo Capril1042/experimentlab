@@ -4,6 +4,7 @@ package com.experimentlab.variant;
 import com.experimentlab.demo.DemoSession;
 import com.experimentlab.experiment.Experiment;
 import com.experimentlab.experiment.ExperimentRepository;
+import com.experimentlab.experiment.ExperimentStatus;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,6 +53,8 @@ public class VariantService {
                 demoSessionId
         );
 
+        ensureExperimentConfigurable(experiment);
+
         Variant variant = new Variant();
         variant.setExperiment(experiment);
         variant.setName(request.name());
@@ -71,8 +74,12 @@ public class VariantService {
             UUID demoSessionId,
             UpdateVariantRequest request
     ) {
-        getOwnedExperiment(experimentId, demoSessionId);
+        Experiment experiment = getOwnedExperiment(
+                experimentId,
+                demoSessionId
+        );
 
+        ensureExperimentConfigurable(experiment);
         Variant variant = getVariant(experimentId, variantId);
 
         variant.setName(request.name());
@@ -91,8 +98,12 @@ public class VariantService {
             UUID variantId,
             UUID demoSessionId
     ) {
-        getOwnedExperiment(experimentId, demoSessionId);
+        Experiment experiment = getOwnedExperiment(
+                experimentId,
+                demoSessionId
+        );
 
+        ensureExperimentConfigurable(experiment);
         Variant variant = getVariant(experimentId, variantId);
 
         variantRepository.delete(variant);
@@ -142,6 +153,15 @@ public class VariantService {
         }
 
         return configuration;
+    }
+
+    private void ensureExperimentConfigurable(Experiment experiment) {
+        if (experiment.getStatus() != ExperimentStatus.DRAFT) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Experiment configuration is locked after starting"
+            );
+        }
     }
 
 }

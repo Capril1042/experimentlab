@@ -82,4 +82,21 @@ public class ExperimentController {
         );
     }
 
+    @PostMapping("/{id}/start")
+    public ExperimentResponse startExperiment(
+            @PathVariable UUID id,
+            HttpServletRequest httpRequest
+    ) {
+        DemoSession demoSession = demoSessionResolver.resolve(httpRequest)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED,
+                        "Valid demo session required"
+                ));
+
+        return experimentService.startExperiment(
+                id,
+                demoSession.getId()
+        );
+    }
+
 }

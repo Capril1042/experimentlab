@@ -341,4 +341,205 @@ class ExperimentlabApplicationTests {
                             """))
 				.andExpect(status().isBadRequest());
 	}
+
+	@Test
+	void cannotStartExperimentWhenTrafficDoesNotTotal100Percent() throws Exception {
+
+		// Create a demo session.
+		MvcResult sessionResult = mockMvc.perform(
+						get("/api/demo/session")
+				)
+				.andExpect(status().isOk())
+				.andReturn();
+
+		Cookie sessionCookie = sessionResult.getResponse()
+				.getCookie("DEMO_SESSION_ID");
+
+		// Create an experiment.
+		MvcResult experimentResult = mockMvc.perform(
+						post("/api/experiments")
+								.cookie(sessionCookie)
+								.contentType(MediaType.APPLICATION_JSON)
+								.content("""
+                            {
+                                "name": "Traffic Allocation Test",
+                                "description": "Testing traffic validation",
+                                "hypothesis": "Traffic must total 100%",
+                                "primaryMetric": "CONVERSION_RATE"
+                            }
+                            """)
+				)
+				.andExpect(status().isCreated())
+				.andReturn();
+
+		String experimentId = jsonMapper.readTree(
+				experimentResult.getResponse().getContentAsString()
+		).get("id").asString();
+
+		// Create the first variant with 40% traffic.
+		mockMvc.perform(
+				post("/api/experiments/" + experimentId + "/variants")
+						.cookie(sessionCookie)
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+                            {
+                                "name": "Control",
+                                "description": "Control variant",
+                                "configuration": {
+                                    "buttonText": "Get Started"
+                                },
+                                "trafficPercentage": 40
+                            }
+                            """)
+		).andExpect(status().isCreated());
+
+		// Create the second variant with 40% traffic.
+		mockMvc.perform(
+				post("/api/experiments/" + experimentId + "/variants")
+						.cookie(sessionCookie)
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+                            {
+                                "name": "Treatment",
+                                "description": "Treatment variant",
+                                "configuration": {
+                                    "buttonText": "Join Now"
+                                },
+                                "trafficPercentage": 40
+                            }
+                            """)
+		).andExpect(status().isCreated());
+
+		// Attempt to start with only 80% allocated.
+		mockMvc.perform(
+				post("/api/experiments/" + experimentId + "/start")
+						.cookie(sessionCookie)
+		).andExpect(status().isBadRequest());
+	}
+
+
+	@Test
+	void startingExperimentLocksVariantConfiguration() throws Exception {
+
+		// Create a demo session.
+		MvcResult sessionResult = mockMvc.perform(
+						get("/api/demo/session")
+				)
+				.andExpect(status().isOk())
+				.andReturn();
+
+		Cookie sessionCookie = sessionResult.getResponse()
+				.getCookie("DEMO_SESSION_ID");
+
+		// Create an experiment.
+		MvcResult experimentResult = mockMvc.perform(
+						post("/api/experiments")
+								.cookie(sessionCookie)
+								.contentType(MediaType.APPLICATION_JSON)
+								.content("""
+                            {
+                                "name": "Configuration Lock Test",
+                                "description": "Testing configuration locking",
+                                "hypothesis": "Started experiments cannot be modified",
+                                "primaryMetric": "CONVERSION_RATE"
+                            }
+                            """)
+				)
+				.andExpect(status().isCreated())
+				.andReturn();
+
+		String experimentId = jsonMapper.readTree(
+				experimentResult.getResponse().getContentAsString()
+		).get("id").asString();
+
+		// Create Control variant.
+		MvcResult controlResult = mockMvc.perform(
+						post("/api/experiments/" + experimentId + "/variants")
+								.cookie(sessionCookie)
+								.contentType(MediaType.APPLICATION_JSON)
+								.content("""
+                            {
+                                "name": "Control",
+                                "description": "Original experience",
+                                "configuration": {
+                                    "buttonText": "Get Started"
+                                },
+                                "trafficPercentage": 50
+                            }
+                            """)
+				)
+				.andExpect(status().isCreated())
+				.andReturn();
+
+		String controlId = jsonMapper.readTree(
+				controlResult.getResponse().getContentAsString()
+		).get("id").asString();
+
+		// Create Treatment variant.
+		mockMvc.perform(
+				post("/api/experiments/" + experimentId + "/variants")
+						.cookie(sessionCookie)
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+                            {
+                                "name": "Treatment",
+                                "description": "New experience",
+                                "configuration": {
+                                    "buttonText": "Join Now"
+                                },
+                                "trafficPercentage": 50
+                            }
+                            """)
+		).andExpect(status().isCreated());
+
+		// Start experiment.
+		mockMvc.perform(
+						post("/api/experiments/" + experimentId + "/start")
+								.cookie(sessionCookie)
+				)
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.status").value("RUNNING"));
+
+		// Attempt to create another variant.
+		mockMvc.perform(
+				post("/api/experiments/" + experimentId + "/variants")
+						.cookie(sessionCookie)
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+                            {
+                                "name": "Third Variant",
+                                "description": "Should be rejected",
+                                "configuration": {
+                                    "buttonText": "Try Now"
+                                },
+                                "trafficPercentage": 10
+                            }
+                            """)
+		).andExpect(status().isConflict());
+
+		// Attempt to update Control.
+		mockMvc.perform(
+				put("/api/experiments/" + experimentId + "/variants/" + controlId)
+						.cookie(sessionCookie)
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+                            {
+                                "name": "Updated Control",
+                                "description": "Should be rejected",
+                                "configuration": {
+                                    "buttonText": "Updated"
+                                },
+                                "trafficPercentage": 50
+                            }
+                            """)
+		).andExpect(status().isConflict());
+
+		// Attempt to delete Control.
+		mockMvc.perform(
+				delete("/api/experiments/" + experimentId + "/variants/" + controlId)
+						.cookie(sessionCookie)
+		).andExpect(status().isConflict());
+	}
+
+
 }
