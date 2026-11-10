@@ -40,10 +40,11 @@ export function EditVariantForm({
             if (
                 typeof parsed !== 'object' ||
                 parsed === null ||
-                Array.isArray(parsed)
+                Array.isArray(parsed) ||
+                Object.keys(parsed).length === 0
             ) {
                 setConfigurationError(
-                    'Configuration must be a JSON object.'
+                    'Configuration must be a non-empty JSON object.'
                 )
                 return
             }

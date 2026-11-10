@@ -213,4 +213,132 @@ class ExperimentlabApplicationTests {
 				.andExpect(status().isNotFound());
 	}
 
+	@Test
+	void variantsSupportDifferentConfigurationStructures() throws Exception {
+
+		// Create a demo session.
+		MvcResult sessionResult = mockMvc.perform(
+						get("/api/demo/session")
+				)
+				.andExpect(status().isOk())
+				.andReturn();
+
+		Cookie sessionCookie = sessionResult
+				.getResponse()
+				.getCookie("DEMO_SESSION_ID");
+
+		// Create an experiment.
+		String experimentRequest = """
+            {
+                "name": "Flexible Configuration Test",
+                "description": "Testing different configuration types",
+                "hypothesis": "Different configurations can be stored",
+                "primaryMetric": "CONVERSION_RATE"
+            }
+            """;
+
+		MvcResult experimentResult = mockMvc.perform(
+						post("/api/experiments")
+								.cookie(sessionCookie)
+								.contentType(MediaType.APPLICATION_JSON)
+								.content(experimentRequest)
+				)
+				.andExpect(status().isCreated())
+				.andReturn();
+
+		String experimentId = jsonMapper.readTree(
+				experimentResult.getResponse().getContentAsString()
+		).get("id").asText();
+
+		// Create a headline variant.
+		String headlineConfiguration = """
+            {
+                "name": "Headline Variation",
+                "description": "Alternative headline",
+                "configuration": {
+                    "headline": "Start your free trial",
+                    "fontSize": 32,
+                    "textColor": "#ffffff"
+                },
+                "trafficPercentage": 50.00
+            }
+            """;
+
+		mockMvc.perform(
+						post("/api/experiments/" + experimentId + "/variants")
+								.cookie(sessionCookie)
+								.contentType(MediaType.APPLICATION_JSON)
+								.content(headlineConfiguration)
+				)
+				.andExpect(status().isCreated())
+				.andExpect(jsonPath("$.configuration.headline")
+						.value("Start your free trial"))
+				.andExpect(jsonPath("$.configuration.fontSize").value(32));
+
+		// Create a pricing variant.
+		String pricingConfiguration = """
+            {
+                "name": "Pricing Variation",
+                "description": "Discounted monthly pricing",
+                "configuration": {
+                    "monthlyPrice": 19.99,
+                    "discountPercentage": 20,
+                    "billingPeriod": "monthly"
+                },
+                "trafficPercentage": 50.00
+            }
+            """;
+
+		mockMvc.perform(
+						post("/api/experiments/" + experimentId + "/variants")
+								.cookie(sessionCookie)
+								.contentType(MediaType.APPLICATION_JSON)
+								.content(pricingConfiguration)
+				)
+				.andExpect(status().isCreated())
+				.andExpect(jsonPath("$.configuration.monthlyPrice").value(19.99))
+				.andExpect(jsonPath("$.configuration.discountPercentage").value(20))
+				.andExpect(jsonPath("$.configuration.billingPeriod").value("monthly"));
+	}
+	@Test
+	void createVariantWithEmptyConfigurationReturnsBadRequest() throws Exception {
+		MvcResult sessionResult = mockMvc.perform(get("/api/demo/session"))
+				.andExpect(status().isOk())
+				.andReturn();
+
+		Cookie sessionCookie = sessionResult.getResponse().getCookie("DEMO_SESSION_ID");
+
+		MvcResult experimentResult = mockMvc.perform(post("/api/experiments")
+						.cookie(sessionCookie)
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+                            {
+                                "name": "Configuration Validation Test",
+                                "description": "Testing empty configuration",
+                                "hypothesis": "Validation should reject empty configurations",
+                                "primaryMetric": "CONVERSION_RATE"
+                            }
+                            """))
+				.andExpect(status().isCreated())
+				.andReturn();
+
+		String experimentId = JsonMapper.builder()
+				.build()
+				.readTree(experimentResult.getResponse().getContentAsString())
+				.get("id")
+				.asString();
+
+		mockMvc.perform(post("/api/experiments/" + experimentId + "/variants")
+						.cookie(sessionCookie)
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+                            {
+                                "name": "Empty Configuration",
+                                "description": "This should be rejected",
+                                "configuration": {},
+                                "trafficPercentage": 100
+                            }
+                            """))
+				.andExpect(status().isBadRequest());
+	}
 }

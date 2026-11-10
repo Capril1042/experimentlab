@@ -57,9 +57,7 @@ public class VariantService {
         variant.setName(request.name());
         variant.setDescription(request.description());
         variant.setConfiguration(
-                request.configuration() != null
-                        ? request.configuration()
-                        : Map.of()
+                validateConfiguration(request.configuration())
         );
         variant.setTrafficPercentage(request.trafficPercentage());
 
@@ -80,9 +78,7 @@ public class VariantService {
         variant.setName(request.name());
         variant.setDescription(request.description());
         variant.setConfiguration(
-                request.configuration() != null
-                        ? request.configuration()
-                        : Map.of()
+                validateConfiguration(request.configuration())
         );
         variant.setTrafficPercentage(request.trafficPercentage());
 
@@ -133,5 +129,20 @@ public class VariantService {
                 variant.getTrafficPercentage()
         );
     }
+
+
+    private Map<String, Object> validateConfiguration(
+            Map<String, Object> configuration
+    ) {
+        if (configuration == null || configuration.isEmpty()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Configuration must be a non-empty JSON object"
+            );
+        }
+
+        return configuration;
+    }
+
 }
 
