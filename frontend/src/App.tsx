@@ -1,10 +1,12 @@
 
+import { Routes, Route } from 'react-router-dom'
 import { useDemoSession } from './features/experiments/hooks/useDemoSession'
 import { useExperiments } from './features/experiments/hooks/useExperiments'
 import { ExperimentList } from './features/experiments/components/ExperimentList'
 import { CreateExperimentForm } from './features/experiments/components/CreateExperimentForm'
+import { ExperimentDetailsPage } from './features/experiments/pages/ExperimentDetailsPage'
 
-function App() {
+function DashboardPage() {
     const {
         data: session,
         isLoading: sessionLoading,
@@ -18,7 +20,7 @@ function App() {
     } = useExperiments()
 
     return (
-        <main className="min-h-screen bg-slate-950 text-white p-8">
+        <main className="min-h-screen bg-slate-950 p-8 text-white">
             <h1 className="text-4xl font-bold text-lime-400">
                 ExperimentLab
             </h1>
@@ -63,6 +65,15 @@ function App() {
                 />
             </section>
         </main>
+    )
+}
+
+function App() {
+    return (
+        <Routes>
+            <Route path="/" element={<DashboardPage />} />
+            <Route path="/experiments/:id" element={<ExperimentDetailsPage />} />
+        </Routes>
     )
 }
 

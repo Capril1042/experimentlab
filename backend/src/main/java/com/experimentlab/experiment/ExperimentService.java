@@ -8,6 +8,8 @@ import com.experimentlab.demo.DemoSession;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
 @Service
 public class ExperimentService {
@@ -58,13 +60,27 @@ public class ExperimentService {
                 experiment.getUpdatedAt()
         );
     }
-
     @Transactional(readOnly = true)
     public List<ExperimentResponse> getExperimentsForDemoSession(UUID demoSessionId) {
         return experimentRepository.findByDemoSession_Id(demoSessionId)
                 .stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public ExperimentResponse getExperimentForDemoSession(
+            UUID experimentId,
+            UUID demoSessionId
+    ) {
+        Experiment experiment = experimentRepository
+                .findByDemoSession_IdAndId(demoSessionId, experimentId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Experiment not found"
+                ));
+
+        return toResponse(experiment);
     }
 
 }
