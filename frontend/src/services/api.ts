@@ -37,3 +37,34 @@ export async function post<TRequest, TResponse>(
 
     return response.json() as Promise<TResponse>
 }
+
+export async function put<TRequest, TResponse>(
+    endpoint: string,
+    body: TRequest
+): Promise<TResponse> {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+    })
+
+    if (!response.ok) {
+        throw new Error(`API request failed: ${response.status}`)
+    }
+
+    return response.json() as Promise<TResponse>
+}
+
+export async function del(endpoint: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        method: 'DELETE',
+        credentials: 'include',
+    })
+
+    if (!response.ok) {
+        throw new Error(`API request failed: ${response.status}`)
+    }
+}
