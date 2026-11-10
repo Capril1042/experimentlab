@@ -14,6 +14,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.PathVariable;
 import java.util.UUID;
+import com.experimentlab.simulation.CreateSimulationRequest;
+import com.experimentlab.simulation.Simulation;
+import com.experimentlab.simulation.SimulationResponse;
+import com.experimentlab.simulation.SimulationService;
 
 import java.util.List;
 
@@ -23,12 +27,16 @@ public class ExperimentController {
 
     private final ExperimentService experimentService;
     private final DemoSessionResolver demoSessionResolver;
+    private final SimulationService simulationService;
 
     public ExperimentController(
             ExperimentService experimentService,
-            DemoSessionResolver demoSessionResolver) {
+            DemoSessionResolver demoSessionResolver,
+            SimulationService simulationService
+    ) {
         this.experimentService = experimentService;
         this.demoSessionResolver = demoSessionResolver;
+        this.simulationService = simulationService;
     }
 
     @ResponseStatus(HttpStatus.CREATED)
@@ -97,6 +105,35 @@ public class ExperimentController {
                 id,
                 demoSession.getId()
         );
+    }
+
+    @ResponseStatus(HttpStatus.CREATED)
+    @PostMapping("/{experimentId}/simulations")
+    public SimulationResponse runSimulation(
+            @PathVariable UUID experimentId,
+            @RequestBody CreateSimulationRequest request,
+            HttpServletRequest httpRequest
+    ) {
+        DemoSession demoSession = demoSessionResolver.resolve(httpRequest)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED,
+                        "Valid demo session required"
+                ));
+
+        if (request.targetUsers() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Target users are required"
+            );
+        }
+
+        Simulation simulation = simulationService.runSimulation(
+                experimentId,
+                demoSession.getId(),
+                request.targetUsers()
+        );
+
+        return SimulationResponse.from(simulation);
     }
 
 }
