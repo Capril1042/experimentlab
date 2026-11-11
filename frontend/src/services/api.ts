@@ -1,4 +1,5 @@
 import type { DemoSessionResponse } from '../features/experiments/types/demoSession'
+import type {Simulation, VariantSimulationResult} from "../features/experiments/types/simulation.ts";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 
@@ -68,3 +69,22 @@ export async function del(endpoint: string): Promise<void> {
         throw new Error(`API request failed: ${response.status}`)
     }
 }
+
+
+export async function getSimulations(
+    experimentId: string
+): Promise<Simulation[]> {
+    return get<Simulation[]>(
+        `/api/experiments/${experimentId}/simulations`
+    )
+}
+
+export async function getSimulationResults(
+    experimentId: string,
+    simulationId: string
+): Promise<VariantSimulationResult[]> {
+    return get<VariantSimulationResult[]>(
+        `/api/experiments/${experimentId}/simulations/${simulationId}/results`
+    )
+}
+

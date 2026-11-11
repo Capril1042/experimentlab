@@ -1,5 +1,6 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import type { Simulation } from '../types/simulation'
 import { post } from '../../../services/api'
 
 export interface SimulationResponse {
@@ -22,7 +23,7 @@ export function useRunSimulation() {
 
     return useMutation({
         mutationFn: ({ experimentId, targetUsers }: RunSimulationRequest) =>
-            post<{ targetUsers: number }, SimulationResponse>(`/api/experiments/${experimentId}/simulations`,
+            post<{ targetUsers: number }, Simulation>(`/api/experiments/${experimentId}/simulations`,
                 { targetUsers }
             ),
         onSuccess: (_, variables) => {

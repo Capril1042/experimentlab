@@ -1,7 +1,5 @@
-
 import { Link, useParams } from 'react-router-dom'
-import { useState } from 'react'
-
+import { useEffect, useState } from 'react'
 import { useExperiment } from '../hooks/useExperiment'
 import { useVariants } from '../hooks/useVariants'
 import { useDeleteVariant } from '../hooks/useDeleteVariant'
@@ -10,6 +8,10 @@ import { useStartExperiment } from '../hooks/useStartExperiment'
 import { CreateVariantForm } from '../components/CreateVariantForm'
 import { EditVariantForm } from '../components/EditVariantForm'
 import { SimulationControls } from '../components/SimulationControls'
+
+import { useSimulations } from '../hooks/useSimulations'
+import { SimulationHistory } from '../components/SimulationHistory'
+import { SimulationAnalytics } from '../components/SimulationAnalytics'
 
 export function ExperimentDetailsPage() {
     const { id } = useParams<{ id: string }>()
@@ -25,6 +27,14 @@ export function ExperimentDetailsPage() {
         isLoading: variantsLoading,
         isError: variantsError,
     } = useVariants(id ?? '')
+
+    const { data: simulations } = useSimulations(id ?? '')
+
+    const [selectedSimulationId, setSelectedSimulationId] =
+        useState<string | null>(null)
+
+    const [lastLatestCompletedId, setLastLatestCompletedId] =
+        useState<string | null>(null)
 
     const [editingVariantId, setEditingVariantId] = useState<string | null>(null)
 
@@ -46,6 +56,20 @@ export function ExperimentDetailsPage() {
         !variantsLoading &&
         !variantsError &&
         Boolean(variants && variants.length > 0)
+
+    const latestCompletedSimulation = simulations?.find(
+        (simulation) => simulation.status === 'COMPLETED'
+    )
+
+    useEffect(() => {
+        if (
+            latestCompletedSimulation &&
+            latestCompletedSimulation.id !== lastLatestCompletedId
+        ) {
+            setSelectedSimulationId(latestCompletedSimulation.id)
+            setLastLatestCompletedId(latestCompletedSimulation.id)
+        }
+    }, [latestCompletedSimulation?.id, lastLatestCompletedId])
 
     if (isLoading) {
         return (
@@ -256,6 +280,23 @@ export function ExperimentDetailsPage() {
                     {/* Simulation controls */}
                     {experiment.status === 'RUNNING' && (
                         <SimulationControls experimentId={id ?? ''} />
+                    )}
+
+                    {experiment.status === 'RUNNING' && (
+                        <>
+                            <SimulationHistory
+                                experimentId={id ?? ''}
+                                selectedSimulationId={selectedSimulationId}
+                                onSelectSimulation={setSelectedSimulationId}
+                            />
+
+                            {selectedSimulationId && (
+                                <SimulationAnalytics
+                                    experimentId={id ?? ''}
+                                    simulationId={selectedSimulationId}
+                                />
+                            )}
+                        </>
                     )}
 
                     {/* Error messages */}

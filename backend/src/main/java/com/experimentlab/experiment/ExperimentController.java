@@ -18,6 +18,7 @@ import com.experimentlab.simulation.CreateSimulationRequest;
 import com.experimentlab.simulation.Simulation;
 import com.experimentlab.simulation.SimulationResponse;
 import com.experimentlab.simulation.SimulationService;
+import com.experimentlab.variant.VariantSimulationResult;
 
 import java.util.List;
 
@@ -135,5 +136,43 @@ public class ExperimentController {
 
         return SimulationResponse.from(simulation);
     }
+
+    @GetMapping("/{experimentId}/simulations")
+    public List<SimulationResponse> getSimulations(
+            @PathVariable UUID experimentId,
+            HttpServletRequest httpRequest
+    ) {
+        DemoSession demoSession = demoSessionResolver.resolve(httpRequest)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED,
+                        "Valid demo session required"
+                ));
+
+        return simulationService.getSimulationsForExperiment(
+                experimentId,
+                demoSession.getId()
+        );
+    }
+
+
+    @GetMapping("/{experimentId}/simulations/{simulationId}/results")
+    public List<VariantSimulationResult> getSimulationResults(
+            @PathVariable UUID experimentId,
+            @PathVariable UUID simulationId,
+            HttpServletRequest httpRequest
+    ) {
+        DemoSession demoSession = demoSessionResolver.resolve(httpRequest)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED,
+                        "Valid demo session required"
+                ));
+
+        return simulationService.getSimulationStats(
+                experimentId,
+                simulationId,
+                demoSession.getId()
+        );
+    }
+
 
 }
