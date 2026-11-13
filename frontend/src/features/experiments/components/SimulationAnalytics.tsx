@@ -19,7 +19,7 @@ export function SimulationAnalytics({
 
     if (isLoading) {
         return (
-            <section className="mt-8">
+            <section className="mt-8 border-t border-slate-800 pt-6">
                 <p className="text-slate-400">Loading analytics...</p>
             </section>
         )
@@ -27,7 +27,7 @@ export function SimulationAnalytics({
 
     if (isError) {
         return (
-            <section className="mt-8">
+            <section className="mt-8 border-t border-slate-800 pt-6">
                 <p className="text-pink-400">
                     Could not load simulation analytics.
                 </p>
@@ -37,9 +37,9 @@ export function SimulationAnalytics({
 
     if (!results || results.length === 0) {
         return (
-            <section className="mt-8 rounded-xl border border-slate-800 bg-slate-950 p-5">
-                <h3 className="text-lg font-semibold text-white">
-                    Analytics
+            <section className="mt-8 border-t border-slate-800 pt-6">
+                <h3 className="text-xl font-semibold text-white">
+                    Simulation analytics
                 </h3>
                 <p className="mt-2 text-sm text-slate-400">
                     No variant results available for this simulation.
@@ -71,7 +71,8 @@ export function SimulationAnalytics({
     ]
 
     return (
-        <section className="mt-8 rounded-xl border border-slate-800 bg-slate-950 p-5">
+        <section className="mt-8 border-t border-slate-800 pt-6">
+            {/* Analytics heading */}
             <div>
                 <h3 className="text-xl font-semibold text-white">
                     Simulation analytics
@@ -81,7 +82,8 @@ export function SimulationAnalytics({
                 </p>
             </div>
 
-            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {/* Summary metrics */}
+            <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
                 {metrics.map((metric) => (
                     <div
                         key={metric.label}
@@ -97,45 +99,66 @@ export function SimulationAnalytics({
                 ))}
             </div>
 
-            <VariantPerformanceChart results={results} />
-            <ConversionRateChart results={results} />
+            {/* Performance charts */}
+            <div className="mt-6 grid gap-4 xl:grid-cols-2">
+                <div className="min-w-0">
+                    <VariantPerformanceChart results={results} />
+                </div>
 
-            <div className="mt-8 overflow-x-auto">
-                <table className="w-full min-w-[650px] text-left">
-                    <thead>
-                    <tr className="border-b border-slate-800 text-sm text-slate-400">
-                        <th className="p-3">Variant</th>
-                        <th className="p-3">CTR</th>
-                        <th className="p-3">Conversion rate</th>
-                        <th className="p-3">Click to conversion</th>
-                        <th className="p-3">Conversions</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {results.map((result) => (
-                        <tr
-                            key={result.variantId}
-                            className="border-b border-slate-800 text-sm"
-                        >
-                            <td className="p-3 font-semibold text-white">
-                                {result.variantName}
-                            </td>
-                            <td className="p-3 text-lime-400">
-                                {result.clickThroughRate.toFixed(2)}%
-                            </td>
-                            <td className="p-3 text-white">
-                                {result.conversionRate.toFixed(2)}%
-                            </td>
-                            <td className="p-3 text-white">
-                                {result.clickToConversionRate.toFixed(2)}%
-                            </td>
-                            <td className="p-3 text-white">
-                                {result.conversions.toLocaleString()}
-                            </td>
+                <div className="min-w-0">
+                    <ConversionRateChart results={results} />
+                </div>
+            </div>
+
+            {/* Variant comparison */}
+            <div className="mt-8">
+                <div className="mb-4">
+                    <h4 className="text-lg font-semibold text-white">
+                        Variant comparison
+                    </h4>
+                    <p className="mt-1 text-sm text-slate-400">
+                        Compare engagement and conversion performance.
+                    </p>
+                </div>
+
+                <div className="overflow-x-auto rounded-lg border border-slate-800">
+                    <table className="w-full min-w-[650px] text-left">
+                        <thead className="bg-slate-900">
+                        <tr className="text-sm text-slate-400">
+                            <th className="p-4 font-medium">Variant</th>
+                            <th className="p-4 font-medium">CTR</th>
+                            <th className="p-4 font-medium">Conversion rate</th>
+                            <th className="p-4 font-medium">Click to conversion</th>
+                            <th className="p-4 font-medium">Conversions</th>
                         </tr>
-                    ))}
-                    </tbody>
-                </table>
+                        </thead>
+
+                        <tbody>
+                        {results.map((result) => (
+                            <tr
+                                key={result.variantId}
+                                className="border-t border-slate-800 text-sm transition hover:bg-slate-900/60"
+                            >
+                                <td className="p-4 font-semibold text-white">
+                                    {result.variantName}
+                                </td>
+                                <td className="p-4 font-medium text-lime-400">
+                                    {result.clickThroughRate.toFixed(2)}%
+                                </td>
+                                <td className="p-4 text-slate-200">
+                                    {result.conversionRate.toFixed(2)}%
+                                </td>
+                                <td className="p-4 text-slate-200">
+                                    {result.clickToConversionRate.toFixed(2)}%
+                                </td>
+                                <td className="p-4 text-slate-200">
+                                    {result.conversions.toLocaleString()}
+                                </td>
+                            </tr>
+                        ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </section>
     )

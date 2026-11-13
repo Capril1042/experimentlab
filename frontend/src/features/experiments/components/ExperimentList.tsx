@@ -39,7 +39,7 @@ export function ExperimentList({
     }
 
     return (
-        <div className="mt-4 grid gap-4 md:grid-cols-2">
+        <div className="mt-4 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
             {experiments.map((experiment) => (
                 <ExperimentCard
                     key={experiment.id}

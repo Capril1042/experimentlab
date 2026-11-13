@@ -22,6 +22,7 @@ export function ConversionRateChart({
         variant: result.variantName,
         conversionRate: result.conversionRate,
     }))
+
     const maxConversionRate = Math.max(
         ...chartData.map((item) => item.conversionRate),
         0
@@ -33,16 +34,18 @@ export function ConversionRateChart({
     )
 
     return (
-        <section className="mt-8 rounded-xl border border-slate-800 bg-slate-950 p-5">
-            <h3 className="text-lg font-semibold text-white">
-                Conversion rate by variant
-            </h3>
+        <section className="flex h-full min-w-0 flex-col rounded-xl border border-slate-800 bg-slate-950 p-5">
+            <div>
+                <h3 className="text-lg font-semibold text-white">
+                    Conversion rate by variant
+                </h3>
 
-            <p className="mt-1 text-sm text-slate-400">
-                Percentage of exposed users who completed a conversion.
-            </p>
+                <p className="mt-1 text-sm text-slate-400">
+                    Percentage of exposed users who completed a conversion.
+                </p>
+            </div>
 
-            <div className="mt-6 h-72 w-full">
+            <div className="mt-5 min-h-[280px] flex-1">
                 <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                         data={chartData}
@@ -92,7 +95,9 @@ export function ConversionRateChart({
                             <LabelList
                                 dataKey="conversionRate"
                                 position="top"
-                                formatter={(value) => `${Number(value).toFixed(2)}%`}
+                                formatter={(value) =>
+                                    `${Number(value).toFixed(2)}%`
+                                }
                                 fill="#ffffff"
                                 fontSize={13}
                             />

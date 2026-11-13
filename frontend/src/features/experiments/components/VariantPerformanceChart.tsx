@@ -25,17 +25,18 @@ export function VariantPerformanceChart({
     }))
 
     return (
-        <section className="mt-8 rounded-xl border border-slate-800 bg-slate-950 p-5">
+        <section className="flex h-full min-w-0 flex-col rounded-xl border border-slate-800 bg-slate-950 p-5">
             <div>
                 <h3 className="text-lg font-semibold text-white">
                     Variant performance
                 </h3>
+
                 <p className="mt-1 text-sm text-slate-400">
                     Compare clicks and conversions across variants.
                 </p>
             </div>
 
-            <div className="mt-6 h-80 w-full">
+            <div className="mt-5 min-h-[280px] flex-1">
                 <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                         data={chartData}

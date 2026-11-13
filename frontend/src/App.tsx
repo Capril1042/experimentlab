@@ -1,4 +1,3 @@
-
 import { Routes, Route } from 'react-router-dom'
 import { useDemoSession } from './features/experiments/hooks/useDemoSession'
 import { useExperiments } from './features/experiments/hooks/useExperiments'
@@ -21,32 +20,32 @@ function DashboardPage() {
 
     return (
         <main className="min-h-screen bg-slate-950 p-8 text-white">
-            <h1 className="text-4xl font-bold text-lime-400">
-                ExperimentLab
-            </h1>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+                <h1 className="text-4xl font-bold text-lime-400">
+                    ExperimentLab
+                </h1>
 
-            <div className="mt-6 rounded-lg bg-slate-900 p-4">
-                <h2 className="text-lg font-semibold">
-                    Demo Session
-                </h2>
+                <div className="flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2">
+        <span
+            className={`h-2 w-2 rounded-full ${
+                sessionLoading
+                    ? 'bg-slate-400'
+                    : sessionError || !session?.active
+                        ? 'bg-pink-400'
+                        : 'bg-lime-400'
+            }`}
+        />
 
-                {sessionLoading && (
-                    <p className="text-slate-400">
-                        Initializing demo session...
-                    </p>
-                )}
-
-                {sessionError && (
-                    <p className="text-pink-400">
-                        Could not initialize demo session.
-                    </p>
-                )}
-
-                {session && (
-                    <p className="text-lime-400">
-                        Demo session active: {session.active ? 'Yes' : 'No'}
-                    </p>
-                )}
+                    <span className="text-sm text-slate-300">
+            {sessionLoading
+                ? 'Initializing session'
+                : sessionError
+                    ? 'Session unavailable'
+                    : session?.active
+                        ? 'Demo session active'
+                        : 'Demo session inactive'}
+        </span>
+                </div>
             </div>
 
             <div className="mt-8">
